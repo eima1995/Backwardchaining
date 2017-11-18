@@ -7,6 +7,7 @@ public class Main {
     public static String[] facts;
     public static ArrayList<Production> pr = new ArrayList<Production>();
     public static Stack<String> goals = new Stack<String>();
+    public static Stack<String> goals2 = new Stack<String>();
     public static String tab = "   ";
     public static String tab1 = "  ";
     public static ArrayList<String> gdb = new ArrayList<String>();
@@ -16,6 +17,7 @@ public class Main {
     public static boolean foundGoal = false;
     public static String output = "";
     public static int deep = 0;
+
 
 
     public static void readFromFile() throws Exception {
@@ -79,31 +81,68 @@ public class Main {
         System.out.println(tab + end);
     }
 
+    public static Stack<String> derivedFacts;
+    //goals2 - tikslai einamieji saugomi iki sekmės.
+    public static boolean backwardChaining(String goal, int deep){
+        if(!goals2.contains(goal)){
+            goals2.add(goal); //nepamirsti ispopinti, kai neesekmė.
+            //daug if....
+            for(int i = 0; i < pr.size();i++){
+                if(pr.get(i).getKonsekventas().equals(goal)){
+                    output += (++iteration) + ") " + printDeep(deep) + "Tikslas " + goal +". Randame R" + (i + 1) + ":" + getStProduction(i) + ". Nauji tikslai " + pr.get(i).getAntecedentaiSt() + "." + "\n";
+
+                    for(int j = 0; j < pr.get(i).getAntecedentai().size(); j++){
+                        if(backwardChaining(pr.get(i).getAntecedentai().get(j),deep)){
+                            //sekmes atveju
+                        }else{
+                            //neseekmes atveijis
+                        }
+                    }
+                }
+            }
+        }else{
+            output += (++iteration) + ") " + printDeep(deep) + "Tikslas " + goal +  "." + "FAIL - ciklas."+"\n";
+            return false;
+        }
+        return false;
+    }
+    /*
     public static void backwardChaining(){
         for(int i = 0; i < pr.size(); i++){
             if(pr.get(i).getKonsekventas().equals(goals.peek())){
-                output += (++iteration) + ") " + recurssionDeep() + "Tikslas " + goals.peek() +". Randame R" + iteration + ":" + getStProduction(i) + ". Nauji tikslai " + pr.get(i).getAntecedentaiSt() + "." + "\n";
+                output += (++iteration) + ") " + printDeep() + "Tikslas " + goals.peek() +". Randame R" + (i + 1) + ":" + getStProduction(i) + ". Nauji tikslai " + pr.get(i).getAntecedentaiSt() + "." + "\n";
                 //goals = pr.get(i).getAntecedentai();
+                goals2.add(goals.peek());
                 addGoals(i);
-                deep++;
-                backwardChaining();
+
+                if(goals2.contains(goals.peek())){
+                    output += (++iteration) + ") " + printDeep() + "Tikslas " + goals.peek() +". Ciklas. Grįžtame, FAIL" + "\n";
+                    goals2.remove(goals.peek());
+                    goals.pop();
+                    //deep--;
+                }else {
+                    deep++;
+                    backwardChaining();
+                }
             }else if(gdb.contains(goals.peek())){
-                output += (++iteration) + ") "  + recurssionDeep() + "Tikslas " + goals.peek() + ". Faktas (duotas), nes faktai " + gdb.get(0) + printGdb() + ". Grįžtame, sėkmė." + "\n";
+                output += (++iteration) + ") "  + printDeep() + "Tikslas " + goals.peek() + ". Faktas (duotas), nes faktai " + gdb.get(0) + printGdb() + ". Grįžtame, sėkmė." + "\n";
                 goals.pop();
                 //perkelti tikriausiai reikes.
                 gdb.add(goals.peek());
                 deep--;
-                output += (++iteration) + ") "  + recurssionDeep() + "Tikslas " + goals.peek() + ". Faktas (dabar gautas). Faktai " + gdb.get(0) + printGdb() + "." + "\n";
+                output += (++iteration) + ") "  + printDeep() + "Tikslas " + goals.peek() + ". Faktas (dabar gautas). Faktai " + gdb.get(0) + printGdb() + "." + "\n";
                 goals.pop();
-
                 break;
             }else if(i == pr.size() - 1){
-                output += (++iteration) + ") "  + recurssionDeep() + "Tikslas " + goals.peek() + ". Nėra taisyklių jo išvedimui. Grįžtame, FAIL." + "\n";
+                output += (++iteration) + ") "  + printDeep() + "Tikslas " + goals.peek() + ". Nėra taisyklių jo išvedimui. Grįžtame, FAIL." + "\n";
                 goals.pop();
                 deep--;
-                gdb.remove(gdb.size()-1);
             }
         }
+    }*/
+
+    public static String printDeep(int deep){
+        return String.join("", Collections.nCopies(deep, "-"));
     }
 
     public static String printGdb(){
@@ -126,10 +165,6 @@ public class Main {
         for(int i = 0; i < pr.get(index).getAntecedentai().size(); i++){
             goals.add(pr.get(index).getAntecedentai().get(temp - 1 - i));
         }
-    }
-
-    public static String recurssionDeep(){
-        return String.join("", Collections.nCopies(deep, "-"));
     }
 
     public static void ui() {
@@ -180,7 +215,7 @@ public class Main {
         dataOutput();
 
         System.out.println("\n2 DALIS. Vykdymas");
-        backwardChaining();
+        backwardChaining(end,0);
         System.out.println(output);
 
     }
