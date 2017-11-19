@@ -7,7 +7,7 @@ public class Main {
     public static String[] facts;
     public static ArrayList<Production> pr = new ArrayList<Production>();
     public static Stack<String> goals = new Stack<String>();
-    public static Stack<String> goals2 = new Stack<String>();
+    public static Stack<String> newFacts = new Stack<String>();
     public static String tab = "   ";
     public static String tab1 = "  ";
     public static ArrayList<String> gdb = new ArrayList<String>();
@@ -17,8 +17,7 @@ public class Main {
     public static boolean foundGoal = false;
     public static String output = "";
     public static int deep = 0;
-
-
+    public static boolean ruleCanBeApplied;
 
     public static void readFromFile() throws Exception {
         FileReader fr = new FileReader(fileName);
@@ -51,8 +50,6 @@ public class Main {
         for (int i = 0; i < facts.length; i++) {
             gdb.add(facts[i]);
         }
-
-        goals.add(end);
     }
 
     public static void dataOutput() {
@@ -81,31 +78,88 @@ public class Main {
         System.out.println(tab + end);
     }
 
-    public static Stack<String> derivedFacts;
-    //goals2 - tikslai einamieji saugomi iki sekmės.
-    public static boolean backwardChaining(String goal, int deep){
-        if(!goals2.contains(goal)){
-            goals2.add(goal); //nepamirsti ispopinti, kai neesekmė.
-            //daug if....
-            for(int i = 0; i < pr.size();i++){
-                if(pr.get(i).getKonsekventas().equals(goal)){
-                    output += (++iteration) + ") " + printDeep(deep) + "Tikslas " + goal +". Randame R" + (i + 1) + ":" + getStProduction(i) + ". Nauji tikslai " + pr.get(i).getAntecedentaiSt() + "." + "\n";
-
-                    for(int j = 0; j < pr.get(i).getAntecedentai().size(); j++){
-                        if(backwardChaining(pr.get(i).getAntecedentai().get(j),deep)){
-                            //sekmes atveju
-                        }else{
-                            //neseekmes atveijis
+    //facts = gdb
+    public static boolean backwardChaining(String goal){
+        goals.push(goal);// 1.Tikslas išsaugomas į tikslų steką.
+        if(gdb.contains(goal)){//2.Jei tikslas yra tarp pradnių faktų, pašalinamas paskutinis tikslas iš tikslų steko, grąžinama, kad tikslas išvedamas (true).
+            output += (++iteration) + ") "  + printDeep(deep) + "Tikslas " + goals.peek() + ". Faktas (duotas), nes faktai " + gdb.get(0) + printGdb() + ". Grįžtame, sėkmė." + "\n";
+            goals.pop();
+            deep--;
+            return true;
+        }else if(newFacts.contains(goal)){//3.Jei tikslas yra tarp naujų faktų, pašalinamas paskutinis tikslas iš tikslų steko, grąžinama, kad tikslas išvedamas (true).
+            output += (++iteration) + ") "  + printDeep(deep) + "Tikslas " + goals.peek() + ". Faktas (buvo gautas). Faktai " + gdb.get(0) + printGdb() + "." + "\n";
+            goals.pop();
+            deep--;
+            return true;
+        }else if (isCycle(goal)){//4.Jei tikslų steke susidarė ciklas, pašalinamas paskutinis tikslas iš tikslų steko, grąžinama, kad tikslas neišvedamas (false).
+            output += (++iteration) + ") " + printDeep(deep) + "Tikslas " + goals.peek() +". Ciklas. Grįžtame, FAIL" + "\n";
+            goals.pop();
+            deep--;
+            return false;
+        }else{
+            //path
+            //Stack<String> newFactsSaved = newFacts; //saugom isvestus faktus, jei negalesim isvest grazinsim
+            for(int i = 0; i < pr.size(); i++){//7.Iteruojamos visos taisyklės.
+                ruleCanBeApplied = true;       //8.Pažymima, kad einama taisyklė gali būti pritaikyta.
+                if(pr.get(i).getKonsekventas().equals(goal)){ //9.Jei taisyklės konsekventas lygus ieškomam tikslui:
+                    output += (++iteration) + ") " + printDeep(deep) + "Tikslas " + goals.peek() +". Randame R" + (i + 1) + ":" + getStProduction(i) + ". Nauji tikslai " + pr.get(i).getAntecedentaiSt() + "." + "\n";
+                    for(int j = 0; j < pr.get(i).getAntecedentai().size(); j++){  //10.Iteruojami visi taisyklės faktai, einamą faktą vadiname nauju tikslu.
+                        deep++;
+                        String newGoal  = pr.get(i).getAntecedentai().get(j);
+                        if(!backwardChaining(newGoal)){ //11.Rekursiškai kviečiama backwardChaining funkcija, kuriai, kaip tikslas paduodamas naujas tikslo parametras, tikrinama ar naujas tikslas yra išvedamas.
+                            ruleCanBeApplied = false; //12.Jei naujas tikslas neišvedamas, taisyklė pažymima, kaip negalima pritaikyti.
+                           // newFacts = newFactsSaved;
+                            break; //15.Jei naujas tikslas neišvedamas, baigiami iteruoti taisyklės faktai.
                         }
+                       // newFacts.add(pr.get(i).getAntecedentai().get(j));
+                    }
+
+                    if(ruleCanBeApplied){ //16.Tikrinama, ar taisyklė gali būti pritaikyta (ar visi taisyklės faktai galėjo būti rekursiškai išvesti).
+                        newFacts.push(goal); //17.	Jei taisyklė gali būti pritaikyta, pridedamas naujas tikslas į naujų faktų aibę.
+                        //gdb.add(goal);
+                        //Prideti cia dar!!!!
+                        output += (++iteration) + ") "  + printDeep(deep) + "Tikslas " + goals.peek() + ". Faktas (dabar gautas). Faktai " + gdb.get(0) +  " ir " + printNewFacts() + "." + "\n";
+                        deep--;
+                        goals.pop();
+                        return  true;
                     }
                 }
             }
-        }else{
-            output += (++iteration) + ") " + printDeep(deep) + "Tikslas " + goal +  "." + "FAIL - ciklas."+"\n";
-            return false;
+            //Truksta cia dar!!!!
+            output += (++iteration) + ") "  + printDeep(deep) + "Tikslas " + goals.peek() + ". Nėra taisyklių jo išvedimui. Grįžtame, FAIL." + "\n";
+            goals.pop();
+            newFacts.pop();
+            deep--;
+
         }
         return false;
     }
+
+    public static boolean isCycle(String goal){
+        int counter = 0;
+        for(int i = 0; i < goals.size(); i++){
+            if(goals.get(i).equals(goal)){
+                counter++;
+            }
+            if(counter > 1){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static String  printNewFacts(){
+        String temp = "";
+        for(int j = 0; j < newFacts.size(); j++){
+            if(newFacts.size() - 1 == j){
+                temp += newFacts.get(j);
+            }else{
+                temp += newFacts.get(j) + ",";
+            }
+        }
+        return temp;
+    }
+
     /*
     public static void backwardChaining(){
         for(int i = 0; i < pr.size(); i++){
@@ -215,8 +269,7 @@ public class Main {
         dataOutput();
 
         System.out.println("\n2 DALIS. Vykdymas");
-        backwardChaining(end,0);
+        backwardChaining(end);
         System.out.println(output);
-
     }
 }
