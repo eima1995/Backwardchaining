@@ -1,13 +1,12 @@
-Eimantas Bendorius KM 4k. 1 gr. 2017-10-28
-4 testas.
+Eimantas Bendorius KM 4k. 1 gr. 2017-11-15
+2 testas.
 1) Taisykles
-Z D // R1:D -> Z
-D C // R2:C -> D
-C B // R3:B -> C
-B A // R4:A -> B
-G A // R5:A -> G
-Z G // R6:G -> Z
+Z A
+A B
+B A C
+B T
+C T
 2) Faktai
-A
+T
 3) Tikslas
-A
+Z

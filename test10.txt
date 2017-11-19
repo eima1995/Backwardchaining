@@ -1,15 +1,12 @@
 Eimantas Bendorius KM 4k. 1 gr. 2017-11-15
-2 testas.
+10 testas. Negnevitsky pavyzdys
 1) Taisykles
-B D
-G E
-Z D
-D C
-C B
-B A
-G A
-Z G
+Z Y D
+Y X B E
+X A
+L C
+N L M
 2) Faktai
-A
+A B C D E
 3) Tikslas
 Z
